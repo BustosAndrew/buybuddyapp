@@ -9,6 +9,10 @@ watchdog = "==2.3.1"
 openai = "==0.27.0"
 python-decouple = "==3.8"
 altair = "<5"
+certifi = ">=14.05.14"
+six = ">=1.10"
+python-dateutil = ">=2.5.3"
+urllib3 = ">=1.15.1"
 
 [dev-packages]
 
