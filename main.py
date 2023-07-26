@@ -51,12 +51,12 @@ def make_request(question_input: str):
     return response
 
 
-st.header("Streamlit + OpenAI ChatGPT API")
+st.header("Welcome to BuyBuddy! Your personal ai shopping assistant.")
 
 st.markdown("""---""")
 
-question_input = st.text_input("Enter question")
-rerun_button = st.button("Rerun")
+question_input = st.text_input("Ask BuyBuddy a question:")
+rerun_button = st.button("Retry")
 
 st.markdown("""---""")
 
