@@ -4,6 +4,7 @@ from paapi5_python_sdk.models.partner_type import PartnerType
 from paapi5_python_sdk.models.search_items_request import SearchItemsRequest
 from paapi5_python_sdk.models.search_items_resource import SearchItemsResource
 from paapi5_python_sdk.rest import ApiException
+import json
 
 ACCESS_KEY = config('AMZN_ACCESS_KEY_ID')
 SECRET = config('AMZN_SECRET')
@@ -12,14 +13,14 @@ SECRET = config('AMZN_SECRET')
 def get_amazon_product(keywords, category, brand):
     partner_tag = "gignius-22"
 
-    host = "webservices.amazon.com"
-    region = "ap-southeast-4"
+    host = "webservices.amazon.com.au"
+    region = "us-west-2"
     ACCESS_KEY = config('AMZN_ACCESS_KEY_ID')
     SECRET = config('AMZN_SECRET')
 
     """ API declaration """
     default_api = DefaultApi(
-        access_key=str(ACCESS_KEY), secret_key=str(SECRET), host=host, region=region
+        access_key=ACCESS_KEY, secret_key=SECRET, host=host, region=region
     )
 
     search_items_resource = [
@@ -27,32 +28,46 @@ def get_amazon_product(keywords, category, brand):
         SearchItemsResource.OFFERS_LISTINGS_PRICE,
         SearchItemsResource.IMAGES_PRIMARY_MEDIUM,
     ]
-
     """ Forming request """
     try:
-        search_items_request = SearchItemsRequest(
-            partner_tag=partner_tag,
-            partner_type=PartnerType.ASSOCIATES,
-            keywords=keywords,
-            search_index=category,
-            item_count=3,
-            brand=brand,
-            resources=search_items_resource,
-        )
+        if brand:
+            search_items_request = SearchItemsRequest(
+                partner_tag=partner_tag,
+                partner_type=PartnerType.ASSOCIATES,
+                keywords=keywords,
+                search_index=category,
+                item_count=3,
+                brand=brand,
+                resources=search_items_resource,
+            )
+        else:
+            search_items_request = SearchItemsRequest(
+                partner_tag=partner_tag,
+                partner_type=PartnerType.ASSOCIATES,
+                keywords=keywords,
+                search_index=category,
+                item_count=3,
+                resources=search_items_resource,
+            )
     except ValueError as exception:
         print("Error in forming SearchItemsRequest: ", exception)
         return
 
     try:
         """ Sending request """
-        response = default_api.search_items(search_items_request)
+        response = default_api.search_items(
+            search_items_request)
 
         print("API called Successfully")
         print("Complete Response:", response)
 
         """ Parse response """
         if response.search_result is not None:
-            return response.search_result.items
+            res = {}
+            for item in response.search_result.items:
+                res.update({'affiliate_url': item.detail_page_url, 'image_url': item.images.primary.medium.url,
+                           'price': item.offers.listings[0].price.display_amount})
+            return json.dumps(res)
             print("Printing first item information in SearchResult:")
             item_0 = response.search_result.items[0]
             if item_0 is not None:
