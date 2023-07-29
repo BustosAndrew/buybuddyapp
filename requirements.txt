@@ -9,3 +9,4 @@ python_dateutil >= 2.5.3
 setuptools >= 21.0.0
 urllib3 >= 1.15.1
 firebase-admin >= 6.2.0
+streamlit-google-oauth @ git+https://github.com/hunkim/streamlit-google-oauth@5feb84d2b8298f0a512a017bf7ffa9672b449342
