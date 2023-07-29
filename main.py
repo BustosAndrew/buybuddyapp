@@ -40,28 +40,13 @@ if 'chat_history' not in st.session_state:
 
 st.header("BuyBuddy")
 
-with st.container():
-    pattern = r"{\s*('[^']*'|\"[^\"]*\")\s*:\s*('[^']*'|\"[^\"]*\"|\d+)\s*(,\s*('[^']*'|\"[^\"]*\")\s*:\s*('[^']*'|\"[^\"]*\"|\d+)\s*)*}"
-    for message in st.session_state.chat_history[1:]:
-        role = message['role']
-        if (role == "user"):
-            st.write(message['content'])
-        else:
-            content = message['content']
-            matches = re.findall(pattern, content)
-            for match in matches:
-                content = content.replace(match, "")
-            st.write("BuyBuddy: " + content)
-
 
 def submit():
-    st.session_state.question = st.session_state.input
-    st.session_state.input = ""
-    if st.session_state.question == "":
-        return
-    response = make_request(st.session_state.question)
+    response = make_request(st.session_state.input)
 
-    print(response)
+    st.session_state.input = ""
+
+    # print(response)
     message = response["choices"][0]["message"]
     # st.session_state.chat_history.append(message)
     function_args = None
@@ -166,14 +151,33 @@ def make_request(question_input: str):
     return response
 
 
+with st.container():
+    for message in st.session_state.chat_history[1:]:
+        role = message['role']
+        if (role == "user"):
+            st.write(message['content'])
+        else:
+            content = message['content']
+            print(content)
+            if content != "":
+                characters = list(content)
+                start_index = content.find("{")
+                end_index = content.find("}")
+                if start_index > -1 and end_index > -1:
+                    characters[start_index:end_index + 1] = []
+                    if len(characters) > 0:
+                        st.write("BuyBuddy: " + "".join(characters))
+                else:
+                    st.write("BuyBuddy: " + content)
+
 st.markdown("""---""")
 
 with st.container():
     st.text_input("What are you shopping for?",
-                  key="input", on_change=submit)
+                  key="input")
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        st.button("Send a message", on_click=submit)
+        st.button("Send a message", on_click=submit, key="submit_btn")
     with col2:
         st.button("Clear history", on_click=clear)
     with col3:

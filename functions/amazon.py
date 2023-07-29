@@ -59,7 +59,7 @@ def get_amazon_product(keywords, category, brand):
             search_items_request)
 
         print("API called Successfully")
-        print("Complete Response:", response)
+        # print("Complete Response:", response)
 
         """ Parse response """
         if response.search_result is not None:
