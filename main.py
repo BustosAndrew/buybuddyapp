@@ -1,4 +1,5 @@
 import streamlit as st
+import re
 from decouple import config
 import openai
 import json
@@ -40,12 +41,17 @@ if 'chat_history' not in st.session_state:
 st.header("BuyBuddy")
 
 with st.container():
+    pattern = r"{\s*('[^']*'|\"[^\"]*\")\s*:\s*('[^']*'|\"[^\"]*\"|\d+)\s*(,\s*('[^']*'|\"[^\"]*\")\s*:\s*('[^']*'|\"[^\"]*\"|\d+)\s*)*}"
     for message in st.session_state.chat_history[1:]:
         role = message['role']
         if (role == "user"):
             st.write(message['content'])
         else:
-            st.write("BuyBuddy: " + message['content'])
+            content = message['content']
+            matches = re.findall(pattern, content)
+            for match in matches:
+                content = content.replace(match, "")
+            st.write("BuyBuddy: " + content)
 
 
 def submit():
@@ -170,6 +176,26 @@ with st.container():
         st.button("Send a message", on_click=submit)
     with col2:
         st.button("Clear history", on_click=clear)
+    with col3:
+        login_info = oauth.login(
+            client_id=client_id,
+            client_secret=client_secret,
+            redirect_uri=redirect_uri,
+            logout_button_text="Logout",
+        )
+        if login_info:
+            user_id, user_email = login_info
+            # st.write(f"{st.session_state.chat_history}")
+            userDoc = db.collection("users").document(
+                user_id.replace("/", "-")).get()
+            if not userDoc:
+                db.collection("users").document(user_id.replace(
+                    "/", "-")).set({"email": user_email, "chat_history": st.session_state.chat_history})
+            else:
+                chat_history = db.collection("users").document(
+                    user_id.replace("/", "-")).get().to_dict()["chat_history"]
+                st.session_state.chat_history = chat_history
+            st.experimental_rerun()
 
 # st.markdown("""---""")
 
@@ -180,24 +206,3 @@ with st.sidebar:
     st.write("Completion tokens used :", completion_tokes)
     st.write("Total tokens used :", total_tokens_used)
     st.write("Total cost of request: ${:.8f}".format(cost_of_response))
-    login_info = oauth.login(
-        client_id=client_id,
-        client_secret=client_secret,
-        redirect_uri=redirect_uri,
-        logout_button_text="Logout",
-    )
-    if login_info:
-        user_id, user_email = login_info
-        # st.write(f"{st.session_state.chat_history}")
-        userDoc = db.collection("users").document(
-            user_id.replace("/", "-")).get()
-        if not userDoc:
-            db.collection("users").document(user_id.replace(
-                "/", "-")).set({"email": user_email, "chat_history": st.session_state.chat_history})
-        else:
-            chat_history = db.collection("users").document(
-                user_id.replace("/", "-")).get().to_dict()["chat_history"]
-            st.session_state.chat_history = chat_history
-        st.experimental_rerun()
-    else:
-        st.write("Please login")
