@@ -4,7 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-streamlit = "==1.19.0"
+streamlit = "*"
 watchdog = "==2.3.1"
 openai = "==0.27.0"
 python-decouple = "==3.8"

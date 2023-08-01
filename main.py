@@ -12,6 +12,8 @@ cred = credentials.Certificate("./creds.json")
 client_id = config("GOOGLE_CLIENT_ID")
 client_secret = config("GOOGLE_CLIENT_SECRET")
 redirect_uri = config("GOOGLE_REDIRECT_URI")
+API_KEY = config('OPENAI_API_KEY')
+openai.api_key = API_KEY
 
 response = False
 prompt_tokens = 0
@@ -28,97 +30,25 @@ else:
 db = firestore.client()
 
 
-def clear():
-    st.session_state.chat_history = [{"role": "system", "content": "I want you to act as a highly knowledgeable retail worker who specializes in all products available on Amazon.com. Ask questions individually of their requirements. Start by first asking their budget. After finding their requirements, suggest the most suitable product from Amazon.com for them. Please provide the Amazon product link. Remember to highlight the product's key features and how it meets the user's specified needs. Be sure to communicate in a friendly, professional tone that reflects excellent customer service. Only ask one question per message. Show them the affiliate link, price and image of the product as a result."}]
-
-
-st.set_page_config(initial_sidebar_state="collapsed",
-                   page_title="BuyBuddy", page_icon="logo.jpg")
+st.set_page_config(page_title="BuyBuddy", page_icon="logo.jpg")
 
 if 'chat_history' not in st.session_state:
-    st.session_state.chat_history = [{"role": "system", "content": "I want you to act as a highly knowledgeable retail worker who specializes in all products available on Amazon.com. Ask questions individually of their requirements. Start by first asking their budget. After finding their requirements, suggest the most suitable product from Amazon.com for them. Please provide the Amazon product link. Remember to highlight the product's key features and how it meets the user's specified needs. Be sure to communicate in a friendly, professional tone that reflects excellent customer service. Only ask one question per message. Show them the affiliate link, price and image of the product as a result."}]
+    st.session_state.chat_history = [{"role": "system", "content": "I want you to act as a highly knowledgeable retail worker who specializes in all products available on Amazon.com. Ask questions individually of their requirements. Start by first asking their budget. After finding their requirements, suggest the most suitable product from Amazon.com for them. Please provide the Amazon product link. Remember to highlight the product's key features and how it meets the user's specified needs. Be sure to communicate in a friendly, professional tone that reflects excellent customer service. Only ask one question per message. Show them the affiliate link, price and image of the product as a result."}, {"role": "assistant", "content": "What are you shopping for?"}]
 
 st.header("BuyBuddy")
 
-
-def submit():
-    response = make_request(st.session_state.input)
-
-    st.session_state.input = ""
-
-    # print(response)
-    message = response["choices"][0]["message"]
-    # st.session_state.chat_history.append(message)
-    function_args = None
-    function_name = None
-
-    if message.get("function_call"):
-        function_name = message["function_call"]["name"]
-        function_args = json.loads(message["function_call"]["arguments"])
-        brand = (function_args.get("brand") and function_args["brand"]) or ""
-        function_response = get_amazon_product(
-            function_args["keywords"], function_args["category"], brand)
-        st.session_state.chat_history.append({
-            "role": "function",
-                    "name": function_name,
-                    "content": function_response or "No results found.",
-        },)
-        second_response = openai.ChatCompletion.create(
-            model="gpt-4-0613",
-            messages=st.session_state.chat_history,
-            functions=[
-                {
-                    "name": "get_amazon_product",
-                    "description": "Search for a product relating to the user's needs on Amazon.com and return the link to the product. This is a python function.",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "keywords": {
-                                "type": "string",
-                                "description": "Keywords related to what the user wants or needs.",
-                            },
-                            "category": {
-                                "type": "string",
-                                "description": "The amazon category that the keywords fall under. The amazon category that the keywords fall under. Use any of these search indexes as needed: Automotive, Baby, Beauty, Books, Computers, Electronics, EverythingElse, Fashion, GiftCards, HealthPersonalCare, HomeAndKitchen, KindleStore, Lighting, Luggage, MobileApps, MoviesAndTV, Music, OfficeProducts, PetSupplies, Software, SportsAndOutdoors, ToolsAndHomeImprovement, ToysAndGames, VideoGames",
-                            },
-                            "brand": {
-                                "type": "string",
-                                "description": "The brand of the product that the user wants.",
-                            },
-                        },
-                        "required": ["keywords", "category"],
-                    },
-                }
-            ],
-        )
-        response = second_response
-        st.session_state.chat_history.append(response["choices"][0]["message"])
-        if 'user_id' in st.session_state:
-            db.collection("users").document(st.session_state.user_id.replace(
-                "/", "-")).update({"chat_history": st.session_state.chat_history})
-        # print(response)
-        # st.write(response["choices"][0]["message"]["content"])
-    else:
-        # st.write(response["choices"][0]["message"]["content"])
-        st.session_state.chat_history.append(response["choices"][0]["message"])
-        if 'user_id' in st.session_state:
-            db.collection("users").document(st.session_state.user_id.replace(
-                "/", "-")).update({"chat_history": st.session_state.chat_history})
-
-    prompt_tokens = response["usage"]["prompt_tokens"]
-    completion_tokes = response["usage"]["completion_tokens"]
-    total_tokens_used = response["usage"]["total_tokens"]
-
-    cost_of_response = total_tokens_used * 0.000002
+# Display or clear chat messages
+for message in st.session_state.chat_history:
+    if (message["role"] != "function" and message["role"] != "system"):
+        with st.chat_message(message["role"]):
+            st.write(message["content"])
 
 
-API_KEY = config('OPENAI_API_KEY')
-openai.api_key = API_KEY
+def clear():
+    st.session_state.chat_history = [{"role": "system", "content": "I want you to act as a highly knowledgeable retail worker who specializes in all products available on Amazon.com. Ask questions individually of their requirements. Start by first asking their budget. After finding their requirements, suggest the most suitable product from Amazon.com for them. Please provide the Amazon product link. Remember to highlight the product's key features and how it meets the user's specified needs. Be sure to communicate in a friendly, professional tone that reflects excellent customer service. Only ask one question per message. Show them the affiliate link, price and image of the product as a result."}, {"role": "assistant", "content": "What are you shopping for?"}]
 
 
-def make_request(question_input: str):
-    st.session_state.chat_history.append(
-        {"role": "user", "content": f"{question_input}"})
+def make_request():
     response = openai.ChatCompletion.create(
         model="gpt-4-0613",
         messages=st.session_state.chat_history,
@@ -137,76 +67,171 @@ def make_request(question_input: str):
                             "type": "string",
                             "description": "The amazon category that the keywords fall under. Use any of these search indexes as needed: Automotive, Baby, Beauty, Books, Computers, Electronics, EverythingElse, Fashion, GiftCards, HealthPersonalCare, HomeAndKitchen, KindleStore, Lighting, Luggage, MobileApps, MoviesAndTV, Music, OfficeProducts, PetSupplies, Software, SportsAndOutdoors, ToolsAndHomeImprovement, ToysAndGames, VideoGames",
                         },
+                        "budget": {
+                            "type": "integer",
+                            "description": "The maximum amount of money the user is willing to spend on the product.",
+                        },
                         "brand": {
                             "type": "string",
                             "description": "The brand of the product that the user wants.",
                         },
                     },
-                    "required": ["keywords", "category"],
+                    "required": ["keywords", "category", "budget"],
                 },
             }
         ],
         function_call="auto",
+        stream=True,
     )
     return response
 
 
-with st.container():
-    for message in st.session_state.chat_history[1:]:
-        role = message['role']
-        if (role == "user"):
-            st.write(message['content'])
-        else:
-            content = message['content']
-            print(content)
-            if content != "":
-                characters = list(content)
-                start_index = content.find("{")
-                end_index = content.find("}")
-                if start_index > -1 and end_index > -1:
-                    characters[start_index:end_index + 1] = []
-                    if len(characters) > 0:
-                        st.write("BuyBuddy: " + "".join(characters))
+# User-provided prompt
+if prompt := st.chat_input():
+    st.session_state.chat_history.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.write(prompt)
+
+# Generate a new response if last message is not from assistant
+if st.session_state.chat_history[-1]["role"] != "assistant":
+    with st.chat_message("assistant"):
+        with st.spinner("Thinking..."):
+            response = make_request()
+            isFuncCall = False
+            function_args = {}
+            function_name = ""
+            placeholder = st.empty()
+            full_response = ''
+
+            for chunk in response:
+                if (chunk["choices"][0]["delta"].get("function_call")):
+                    isFuncCall = True
+                    function_name = chunk["choices"][0]["delta"]["function_call"]["name"]
+                    arg = ""
+                    break
                 else:
-                    st.write("BuyBuddy: " + content)
+                    full_response += (chunk["choices"]
+                                      [0]["delta"].get("content", ""))
+                    placeholder.markdown(full_response)
 
-st.markdown("""---""")
-
-with st.container():
-    st.text_input("What are you shopping for?",
-                  key="input")
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.button("Send a message", on_click=submit, key="submit_btn")
-    with col2:
-        st.button("Clear history", on_click=clear)
-    with col3:
-        login_info = oauth.login(
-            client_id=client_id,
-            client_secret=client_secret,
-            redirect_uri=redirect_uri,
-            logout_button_text="Logout",
-        )
-        if login_info:
-            user_id, user_email = login_info
-            # st.write(f"{st.session_state.chat_history}")
-            userDoc = db.collection("users").document(
-                user_id.replace("/", "-")).get()
-            if not userDoc:
-                db.collection("users").document(user_id.replace(
-                    "/", "-")).set({"email": user_email, "chat_history": st.session_state.chat_history})
+            if isFuncCall:
+                for chunk in response:
+                    # print(chunk)
+                    if chunk["choices"][0]["finish_reason"] == "function_call":
+                        break
+                    if chunk["choices"][0]["delta"]["function_call"].get("arguments"):
+                        if chunk["choices"][0]["delta"]["function_call"]["arguments"] == "keywords":
+                            function_args["keywords"] = ""
+                            arg = "keywords"
+                        elif chunk["choices"][0]["delta"]["function_call"]["arguments"] == "category":
+                            function_args["category"] = ""
+                            arg = "category"
+                        elif chunk["choices"][0]["delta"]["function_call"]["arguments"] == "brand":
+                            function_args["brand"] = ""
+                            arg = "brand"
+                        elif chunk["choices"][0]["delta"]["function_call"]["arguments"] == "budget":
+                            function_args["budget"] = ""
+                            arg = "budget"
+                        else:
+                            args = chunk["choices"][0]["delta"]["function_call"]["arguments"]
+                            if (args.strip().isalnum()):
+                                function_args[arg] += args
+                # function_name = message["function_call"]["name"]
+                # function_args = json.loads(
+                #     message["function_call"]["arguments"])
+                brand = (function_args.get("brand")
+                         and function_args["brand"]) or ""
+                function_response = get_amazon_product(
+                    function_args["keywords"], function_args["category"], function_args["budget"], brand)
+                print(function_response)
+                st.session_state.chat_history.append({
+                    "role": "function",
+                            "name": function_name,
+                            "content": function_response or "No results found.",
+                },)
+                second_response = openai.ChatCompletion.create(
+                    model="gpt-4-0613",
+                    messages=st.session_state.chat_history,
+                    functions=[
+                        {
+                            "name": "get_amazon_product",
+                            "description": "Search for a product relating to the user's needs on Amazon.com and return the link to the product. This is a python function.",
+                            "parameters": {
+                                "type": "object",
+                                "properties": {
+                                    "keywords": {
+                                        "type": "string",
+                                        "description": "Keywords related to what the user wants or needs.",
+                                    },
+                                    "category": {
+                                        "type": "string",
+                                        "description": "The amazon category that the keywords fall under. The amazon category that the keywords fall under. Use any of these search indexes as needed: Automotive, Baby, Beauty, Books, Computers, Electronics, EverythingElse, Fashion, GiftCards, HealthPersonalCare, HomeAndKitchen, KindleStore, Lighting, Luggage, MobileApps, MoviesAndTV, Music, OfficeProducts, PetSupplies, Software, SportsAndOutdoors, ToolsAndHomeImprovement, ToysAndGames, VideoGames",
+                                    },
+                                    "budget": {
+                                        "type": "integer",
+                                        "description": "The maximum amount of money the user is willing to spend on the product.",
+                                    },
+                                    "brand": {
+                                        "type": "string",
+                                        "description": "The brand of the product that the user wants.",
+                                    },
+                                },
+                                "required": ["keywords", "category", "budget"],
+                            },
+                        }
+                    ],
+                    stream=True,
+                )
+                response = second_response
+                # print(response)
+                try:
+                    for chunk in response:
+                        full_response += (chunk["choices"]
+                                          [0]["delta"].get("content", ""))
+                        placeholder.markdown(full_response)
+                    placeholder.markdown(full_response)
+                except:
+                    full_response = "Sorry, but there seems to be an error. Please try again."
+                    placeholder.markdown(full_response)
             else:
-                chat_history = db.collection("users").document(
-                    user_id.replace("/", "-")).get().to_dict()["chat_history"]
-                st.session_state.chat_history = chat_history
-            st.experimental_rerun()
+                placeholder.markdown(full_response)
 
-# st.markdown("""---""")
+    message = {"role": "assistant", "content": full_response}
+
+    # prompt_tokens = response["usage"]["prompt_tokens"]
+    # completion_tokes = response["usage"]["completion_tokens"]
+    # total_tokens_used = response["usage"]["total_tokens"]
+    # cost_of_response = total_tokens_used * 0.000002
+    st.session_state.chat_history.append(message)
+
+    if 'user_id' in st.session_state:
+        db.collection("users").document(st.session_state.user_id.replace(
+            "/", "-")).update({"chat_history": st.session_state.chat_history})
 
 with st.sidebar:
-    st.title("Usage Stats:")
+    # st.title("Usage Stats:")
+    # st.markdown("""---""")
+    # st.write("Prompt tokens used :", prompt_tokens)
+    # st.write("Completion tokens used :", completion_tokes)
+    # st.write("Total tokens used :", total_tokens_used)
+    # st.write("Total cost of request: ${:.8f}".format(cost_of_response))
+    login_info = oauth.login(
+        client_id=client_id,
+        client_secret=client_secret,
+        redirect_uri=redirect_uri,
+        logout_button_text="Logout",
+    )
+    if login_info:
+        user_id, user_email = login_info
+        # st.write(f"{st.session_state.chat_history}")
+        userDoc = db.collection("users").document(
+            user_id.replace("/", "-")).get()
+        if not userDoc:
+            db.collection("users").document(user_id.replace(
+                "/", "-")).set({"email": user_email, "chat_history": st.session_state.chat_history})
+        else:
+            chat_history = db.collection("users").document(
+                user_id.replace("/", "-")).get().to_dict()["chat_history"]
+            st.session_state.chat_history = chat_history
     st.markdown("""---""")
-    st.write("Prompt tokens used :", prompt_tokens)
-    st.write("Completion tokens used :", completion_tokes)
-    st.write("Total tokens used :", total_tokens_used)
-    st.write("Total cost of request: ${:.8f}".format(cost_of_response))
+st.sidebar.button('Clear Chat History', on_click=clear)

@@ -10,7 +10,7 @@ ACCESS_KEY = config('AMZN_ACCESS_KEY_ID')
 SECRET = config('AMZN_SECRET')
 
 
-def get_amazon_product(keywords, category, brand):
+def get_amazon_product(keywords, category, budget, brand):
     partner_tag = "gignius-22"
 
     host = "webservices.amazon.com.au"
@@ -35,7 +35,7 @@ def get_amazon_product(keywords, category, brand):
                 partner_tag=partner_tag,
                 partner_type=PartnerType.ASSOCIATES,
                 keywords=keywords,
-                search_index=category,
+                search_index=category.capitalize(),
                 item_count=3,
                 brand=brand,
                 resources=search_items_resource,
@@ -45,9 +45,11 @@ def get_amazon_product(keywords, category, brand):
                 partner_tag=partner_tag,
                 partner_type=PartnerType.ASSOCIATES,
                 keywords=keywords,
-                search_index=category,
+                search_index=category.capitalize(),
                 item_count=3,
                 resources=search_items_resource,
+                availability="Available",
+                max_price=int(float(budget) * 100),
             )
     except ValueError as exception:
         print("Error in forming SearchItemsRequest: ", exception)
@@ -63,9 +65,9 @@ def get_amazon_product(keywords, category, brand):
 
         """ Parse response """
         if response.search_result is not None:
-            res = {}
+            res = []
             for item in response.search_result.items:
-                res.update({'affiliate_url': item.detail_page_url, 'image_url': item.images.primary.medium.url,
+                res.append({'affiliate_url': item.detail_page_url, 'image_url': item.images.primary.medium.url,
                            'price': item.offers.listings[0].price.display_amount})
             return json.dumps(res)
             print("Printing first item information in SearchResult:")
