@@ -11,6 +11,7 @@ SECRET = config('AMZN_SECRET')
 
 
 def get_amazon_product(keywords, category, budget, brand):
+    # print("Searching for:", keywords, category, budget, brand)
     partner_tag = "gignius-22"
 
     host = "webservices.amazon.com.au"
@@ -67,8 +68,9 @@ def get_amazon_product(keywords, category, budget, brand):
         if response.search_result is not None:
             res = []
             for item in response.search_result.items:
-                res.append({'affiliate_url': item.detail_page_url, 'image_url': item.images.primary.medium.url,
-                           'price': item.offers.listings[0].price.display_amount})
+                if item.detail_page_url.find("dp") > -1:
+                    res.append({'affiliate_url': item.detail_page_url, 'image_url': item.images.primary.medium.url,
+                                'price': item.offers.listings[0].price.display_amount})
             return json.dumps(res)
             print("Printing first item information in SearchResult:")
             item_0 = response.search_result.items[0]

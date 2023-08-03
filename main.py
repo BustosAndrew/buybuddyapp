@@ -1,8 +1,6 @@
 import streamlit as st
-import re
 from decouple import config
 import openai
-import json
 from functions.amazon import get_amazon_product
 import firebase_admin
 from firebase_admin import firestore, credentials
@@ -33,7 +31,7 @@ db = firestore.client()
 st.set_page_config(page_title="BuyBuddy", page_icon="logo.jpg")
 
 if 'chat_history' not in st.session_state:
-    st.session_state.chat_history = [{"role": "system", "content": "I want you to act as a highly knowledgeable retail worker who specializes in all products available on Amazon.com. Ask questions individually of their requirements. Start by first asking their budget. After finding their requirements, suggest the most suitable product from Amazon.com for them. Please provide the Amazon product link. Remember to highlight the product's key features and how it meets the user's specified needs. Be sure to communicate in a friendly, professional tone that reflects excellent customer service. Only ask one question per message. Show them the affiliate link, price and image of the product as a result."}, {"role": "assistant", "content": "What are you shopping for?"}]
+    st.session_state.chat_history = [{"role": "system", "content": "I want you to act as a highly knowledgeable retail worker who specializes in all products available on Amazon.com. Ask questions individually of their requirements. Start by first asking their budget. After finding their requirements, suggest the most suitable product from Amazon.com for them. Please provide the Amazon product link. Remember to highlight the product's key features and how it meets the user's specified needs. Be sure to communicate in a friendly, professional tone that reflects excellent customer service.  If you think what they're looking for is too broad, ask them to clarify what they want further. Only ask one question per message. Show them the affiliate link, price and image of the product as a result."}, {"role": "assistant", "content": "What are you shopping for?"}]
 
 st.header("BuyBuddy")
 
@@ -45,7 +43,7 @@ for message in st.session_state.chat_history:
 
 
 def clear():
-    st.session_state.chat_history = [{"role": "system", "content": "I want you to act as a highly knowledgeable retail worker who specializes in all products available on Amazon.com. Ask questions individually of their requirements. Start by first asking their budget. After finding their requirements, suggest the most suitable product from Amazon.com for them. Please provide the Amazon product link. Remember to highlight the product's key features and how it meets the user's specified needs. Be sure to communicate in a friendly, professional tone that reflects excellent customer service. Only ask one question per message. Show them the affiliate link, price and image of the product as a result."}, {"role": "assistant", "content": "What are you shopping for?"}]
+    st.session_state.chat_history = [{"role": "system", "content": "I want you to act as a highly knowledgeable retail worker who specializes in all products available on Amazon.com. Ask questions individually of their requirements. Start by first asking their budget. After finding their requirements, suggest the most suitable product from Amazon.com for them. Please provide the Amazon product link. Remember to highlight the product's key features and how it meets the user's specified needs. Be sure to communicate in a friendly, professional tone that reflects excellent customer service. If you think what they're looking for is too broad, ask them to clarify what they want further. Only ask one question per message. Show them the affiliate link, price and image of the product as a result."}, {"role": "assistant", "content": "What are you shopping for?"}]
 
 
 def make_request():
@@ -61,11 +59,11 @@ def make_request():
                     "properties": {
                         "keywords": {
                             "type": "string",
-                            "description": "Keywords related to what the user wants or needs.",
+                            "description": "Keywords related to what the user wants or needs. Must be specific enough to return a product.",
                         },
                         "category": {
                             "type": "string",
-                            "description": "The amazon category that the keywords fall under. Use any of these search indexes as needed: Automotive, Baby, Beauty, Books, Computers, Electronics, EverythingElse, Fashion, GiftCards, HealthPersonalCare, HomeAndKitchen, KindleStore, Lighting, Luggage, MobileApps, MoviesAndTV, Music, OfficeProducts, PetSupplies, Software, SportsAndOutdoors, ToolsAndHomeImprovement, ToysAndGames, VideoGames",
+                            "description": "The amazon category that the keywords fall under. Use any of these search indexes that is related to what they want: Automotive, Baby, Beauty, Books, Computers, Electronics, EverythingElse, Fashion, GiftCards, HealthPersonalCare, HomeAndKitchen, KindleStore, Lighting, Luggage, MobileApps, MoviesAndTV, Music, OfficeProducts, PetSupplies, Software, SportsAndOutdoors, ToolsAndHomeImprovement, ToysAndGames, VideoGames",
                         },
                         "budget": {
                             "type": "integer",
@@ -134,6 +132,7 @@ if st.session_state.chat_history[-1]["role"] != "assistant":
                             arg = "budget"
                         else:
                             args = chunk["choices"][0]["delta"]["function_call"]["arguments"]
+                            # print(args)
                             if (args.strip().isalnum()):
                                 function_args[arg] += args
                 # function_name = message["function_call"]["name"]
@@ -143,7 +142,7 @@ if st.session_state.chat_history[-1]["role"] != "assistant":
                          and function_args["brand"]) or ""
                 function_response = get_amazon_product(
                     function_args["keywords"], function_args["category"], function_args["budget"], brand)
-                print(function_response)
+                # print(function_response)
                 st.session_state.chat_history.append({
                     "role": "function",
                             "name": function_name,
@@ -161,11 +160,11 @@ if st.session_state.chat_history[-1]["role"] != "assistant":
                                 "properties": {
                                     "keywords": {
                                         "type": "string",
-                                        "description": "Keywords related to what the user wants or needs.",
+                                        "description": "Keywords related to what the user wants or needs. Must be specific enough to return a product.",
                                     },
                                     "category": {
                                         "type": "string",
-                                        "description": "The amazon category that the keywords fall under. The amazon category that the keywords fall under. Use any of these search indexes as needed: Automotive, Baby, Beauty, Books, Computers, Electronics, EverythingElse, Fashion, GiftCards, HealthPersonalCare, HomeAndKitchen, KindleStore, Lighting, Luggage, MobileApps, MoviesAndTV, Music, OfficeProducts, PetSupplies, Software, SportsAndOutdoors, ToolsAndHomeImprovement, ToysAndGames, VideoGames",
+                                        "description": "The amazon category that the keywords fall under. Use any of these search indexes that is related to what they want: Automotive, Baby, Beauty, Books, Computers, Electronics, EverythingElse, Fashion, GiftCards, HealthPersonalCare, HomeAndKitchen, KindleStore, Lighting, Luggage, MobileApps, MoviesAndTV, Music, OfficeProducts, PetSupplies, Software, SportsAndOutdoors, ToolsAndHomeImprovement, ToysAndGames, VideoGames",
                                     },
                                     "budget": {
                                         "type": "integer",
