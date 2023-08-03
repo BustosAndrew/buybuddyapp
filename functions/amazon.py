@@ -70,7 +70,8 @@ def get_amazon_product(keywords, category, budget, brand):
             for item in response.search_result.items:
                 if item.detail_page_url.find("dp") > -1:
                     res.append({'affiliate_url': item.detail_page_url, 'image_url': item.images.primary.medium.url,
-                                'price': item.offers.listings[0].price.display_amount})
+                                'price': item.offers.listings[0].price.display_amount, 'availability': item.offers.listings[0].message,
+                                 'item_info': item.item_info.title.display_value, ''})
             return json.dumps(res)
             print("Printing first item information in SearchResult:")
             item_0 = response.search_result.items[0]
