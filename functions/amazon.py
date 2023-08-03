@@ -5,6 +5,7 @@ from paapi5_python_sdk.models.search_items_request import SearchItemsRequest
 from paapi5_python_sdk.models.search_items_resource import SearchItemsResource
 from paapi5_python_sdk.rest import ApiException
 import json
+import math
 
 ACCESS_KEY = config('AMZN_ACCESS_KEY_ID')
 SECRET = config('AMZN_SECRET')
@@ -15,6 +16,7 @@ def get_amazon_product(keywords, category, budget, brand):
     partner_tag = "gignius-22"
 
     host = "webservices.amazon.com.au"
+    url = "amazon.com.au/dp"
     region = "us-west-2"
     ACCESS_KEY = config('AMZN_ACCESS_KEY_ID')
     SECRET = config('AMZN_SECRET')
@@ -40,6 +42,8 @@ def get_amazon_product(keywords, category, budget, brand):
                 item_count=3,
                 brand=brand,
                 resources=search_items_resource,
+                max_price=int(float(budget) * 100),
+                min_price=int(math.ceil(float(budget) * 100 / 2 * 1.9))
             )
         else:
             search_items_request = SearchItemsRequest(
@@ -49,8 +53,8 @@ def get_amazon_product(keywords, category, budget, brand):
                 search_index=category.capitalize(),
                 item_count=3,
                 resources=search_items_resource,
-                availability="Available",
                 max_price=int(float(budget) * 100),
+                min_price=int(math.ceil(float(budget) * 100 / 2 * 1.9))
             )
     except ValueError as exception:
         print("Error in forming SearchItemsRequest: ", exception)
@@ -62,15 +66,21 @@ def get_amazon_product(keywords, category, budget, brand):
             search_items_request)
 
         print("API called Successfully")
-        # print("Complete Response:", response)
+        print("Complete Response:", response)
 
         """ Parse response """
         if response.search_result is not None:
             res = []
             for item in response.search_result.items:
-                if item.detail_page_url.find("dp") > -1:
+                if item.detail_page_url.find(url) > -1:
+                    available = item.offers.listings[0].availability
+                    if available is not None:
+                        available = available.message
+                    else:
+                        available = ""
+
                     res.append({'affiliate_url': item.detail_page_url, 'image_url': item.images.primary.medium.url,
-                                'price': item.offers.listings[0].price.display_amount, 'availability': item.offers.listings[0].message,
+                                'price': item.offers.listings[0].price.display_amount, 'availability': available,
                                 'item_info': item.item_info.title.display_value})
             return json.dumps(res)
             print("Printing first item information in SearchResult:")

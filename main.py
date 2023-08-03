@@ -31,7 +31,7 @@ db = firestore.client()
 st.set_page_config(page_title="BuyBuddy", page_icon="logo.jpg")
 
 if 'chat_history' not in st.session_state:
-    st.session_state.chat_history = [{"role": "system", "content": "I want you to act as a highly knowledgeable retail worker who specializes in all products available on Amazon.com. Ask questions individually of their requirements. Start by first asking their budget. After finding their requirements, suggest the most suitable product from Amazon.com for them. Please provide the Amazon product link. Remember to highlight the product's key features and how it meets the user's specified needs. Be sure to communicate in a friendly, professional tone that reflects excellent customer service.  If you think what they're looking for is too broad, ask them to clarify what they want further. Only ask one question per message. Show them the affiliate link, price and image of the product as a result."}, {"role": "assistant", "content": "What are you shopping for?"}]
+    st.session_state.chat_history = [{"role": "system", "content": "I want you to act as a highly knowledgeable retail worker who specializes in all products available on Amazon.com. Ask questions individually of their requirements. Start by first asking their budget. After finding their requirements, suggest the most suitable product from Amazon.com for them. Please provide the Amazon product link. Remember to highlight the product's key features and how it meets the user's specified needs. Be sure to communicate in a friendly, professional tone that reflects excellent customer service.  If you think what they're looking for is too broad, ask them to clarify what they want further. If applicable, ask if they prefer a used item. Only ask one question per message. Show them the affiliate link, price and image of the product as a result."}, {"role": "assistant", "content": "What are you shopping for?"}]
 
 st.header("BuyBuddy")
 
@@ -43,7 +43,7 @@ for message in st.session_state.chat_history:
 
 
 def clear():
-    st.session_state.chat_history = [{"role": "system", "content": "I want you to act as a highly knowledgeable retail worker who specializes in all products available on Amazon.com. Ask questions individually of their requirements. Start by first asking their budget. After finding their requirements, suggest the most suitable product from Amazon.com for them. Please provide the Amazon product link. Remember to highlight the product's key features and how it meets the user's specified needs. Be sure to communicate in a friendly, professional tone that reflects excellent customer service. If you think what they're looking for is too broad, ask them to clarify what they want further. Only ask one question per message. Show them the affiliate link, price and image of the product as a result."}, {"role": "assistant", "content": "What are you shopping for?"}]
+    st.session_state.chat_history = [{"role": "system", "content": "I want you to act as a highly knowledgeable retail worker who specializes in all products available on Amazon.com. Ask questions individually of their requirements. Start by first asking their budget. After finding their requirements, suggest the most suitable product from Amazon.com for them. Please provide the Amazon product link. Remember to highlight the product's key features and how it meets the user's specified needs. Be sure to communicate in a friendly, professional tone that reflects excellent customer service. If you think what they're looking for is too broad, ask them to clarify what they want further. If applicable, ask if they prefer a used item. Only ask one question per message. Show them the affiliate link, price and image of the product as a result."}, {"role": "assistant", "content": "What are you shopping for?"}]
 
 
 def make_request():
@@ -59,7 +59,7 @@ def make_request():
                     "properties": {
                         "keywords": {
                             "type": "string",
-                            "description": "Keywords related to what the user wants or needs. Must be specific enough to return a product.",
+                            "description": "Keywords related to what the user wants or needs. Must be specific enough to return a product. If the user wants used, include any brand name here execpt Amazon Renewed.",
                         },
                         "category": {
                             "type": "string",
@@ -71,7 +71,7 @@ def make_request():
                         },
                         "brand": {
                             "type": "string",
-                            "description": "The brand of the product that the user wants.",
+                            "description": "The brand of the product that the user wants. If they want a used product, the value will be Amazon Renewed.",
                         },
                     },
                     "required": ["keywords", "category", "budget"],
@@ -160,7 +160,7 @@ if st.session_state.chat_history[-1]["role"] != "assistant":
                                 "properties": {
                                     "keywords": {
                                         "type": "string",
-                                        "description": "Keywords related to what the user wants or needs. Must be specific enough to return a product.",
+                                        "description": "Keywords related to what the user wants or needs. Must be specific enough to return a product. If the user wants used, include any brand name here execpt Amazon Renewed.",
                                     },
                                     "category": {
                                         "type": "string",
@@ -172,7 +172,7 @@ if st.session_state.chat_history[-1]["role"] != "assistant":
                                     },
                                     "brand": {
                                         "type": "string",
-                                        "description": "The brand of the product that the user wants.",
+                                        "description": "The brand of the product that the user wants. If they want a used product, the value will be Amazon Renewed.",
                                     },
                                 },
                                 "required": ["keywords", "category", "budget"],
