@@ -30,8 +30,21 @@ db = firestore.client()
 
 st.set_page_config(page_title="BuyBuddy", page_icon="logo.jpg")
 
+st.markdown(
+    """
+        <!-- Google tag (gtag.js) -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-X7HQ2C1WYF%22%3E</script>
+        <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'G-X7HQ2C1WYF');
+        </script>
+    """, unsafe_allow_html=True)
+
 if 'chat_history' not in st.session_state:
-    st.session_state.chat_history = [{"role": "system", "content": "I want you to act as a highly knowledgeable retail worker who specializes in all products available on Amazon.com. Ask questions individually of their requirements. Start by first asking their budget. After finding their requirements, suggest the most suitable product from Amazon.com for them. Please provide the Amazon product link. Remember to highlight the product's key features and how it meets the user's specified needs. Be sure to communicate in a friendly, professional tone that reflects excellent customer service.  If you think what they're looking for is too broad, ask them to clarify what they want further. If applicable, ask if they prefer a used item. Only ask one question per message. Show them the affiliate link, price and image of the product as a result."}, {"role": "assistant", "content": "What are you shopping for?"}]
+    st.session_state.chat_history = [{"role": "system", "content": "The year is currently 2023. If users are asking about product versions that you aren't aware of, they are likely right. I want you to act as a highly knowledgeable retail worker who specializes in all products available on Amazon.com. Ask questions individually of their requirements. Start by first asking their budget. After finding their requirements, suggest the most suitable product from Amazon.com for them. Please provide a properly formatted Amazon product link. Remember to highlight the product's key features and how it meets the user's specified needs. Be sure to communicate in a friendly, professional tone that reflects excellent customer service.  If you think what they're looking for is too broad, ask them to clarify what they want further. If the product they're looking for is known to also be used/refurbished, ask if they prefer a used item. Only ask one question per message. Show them the affiliate link, price and image of the product as a result."}, {"role": "assistant", "content": "What are you shopping for?"}]
 
 st.header("BuyBuddy")
 
@@ -43,7 +56,7 @@ for message in st.session_state.chat_history:
 
 
 def clear():
-    st.session_state.chat_history = [{"role": "system", "content": "I want you to act as a highly knowledgeable retail worker who specializes in all products available on Amazon.com. Ask questions individually of their requirements. Start by first asking their budget. After finding their requirements, suggest the most suitable product from Amazon.com for them. Please provide the Amazon product link. Remember to highlight the product's key features and how it meets the user's specified needs. Be sure to communicate in a friendly, professional tone that reflects excellent customer service. If you think what they're looking for is too broad, ask them to clarify what they want further. If applicable, ask if they prefer a used item. Only ask one question per message. Show them the affiliate link, price and image of the product as a result."}, {"role": "assistant", "content": "What are you shopping for?"}]
+    st.session_state.chat_history = [{"role": "system", "content": "The year is currently 2023. If users are asking about product versions that you aren't aware of, they are likely right. I want you to act as a highly knowledgeable retail worker who specializes in all products available on Amazon.com. Ask questions individually of their requirements. Start by first asking their budget. After finding their requirements, suggest the most suitable product from Amazon.com for them. Please provide a properly formatted Amazon product link. Remember to highlight the product's key features and how it meets the user's specified needs. Be sure to communicate in a friendly, professional tone that reflects excellent customer service. If you think what they're looking for is too broad, ask them to clarify what they want further. If the product they're looking for is known to also be used/refurbished, ask if they prefer a used item. Only ask one question per message. Show them the affiliate link, price and image of the product as a result."}, {"role": "assistant", "content": "What are you shopping for?"}]
 
 
 def make_request():
@@ -53,7 +66,7 @@ def make_request():
         functions=[
             {
                 "name": "get_amazon_product",
-                "description": "Search for a product relating to the user's needs on Amazon.com and return the link/image/price of the product. This is a python function.",
+                "description": "Search for a product relating to the user's needs on Amazon.com and return the link/image/price of the product. This is a python function. If no results are found, advise the user that the product they are looking for is not available or to specify further.",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -114,7 +127,6 @@ if st.session_state.chat_history[-1]["role"] != "assistant":
 
             if isFuncCall:
                 for chunk in response:
-                    # print(chunk)
                     if chunk["choices"][0]["finish_reason"] == "function_call":
                         break
                     if chunk["choices"][0]["delta"]["function_call"].get("arguments"):
@@ -132,12 +144,8 @@ if st.session_state.chat_history[-1]["role"] != "assistant":
                             arg = "budget"
                         else:
                             args = chunk["choices"][0]["delta"]["function_call"]["arguments"]
-                            # print(args)
                             if (args.strip().isalnum()):
                                 function_args[arg] += args
-                # function_name = message["function_call"]["name"]
-                # function_args = json.loads(
-                #     message["function_call"]["arguments"])
                 brand = (function_args.get("brand")
                          and function_args["brand"]) or ""
                 function_response = get_amazon_product(
@@ -154,7 +162,7 @@ if st.session_state.chat_history[-1]["role"] != "assistant":
                     functions=[
                         {
                             "name": "get_amazon_product",
-                            "description": "Search for a product relating to the user's needs on Amazon.com and return the link to the product. This is a python function.",
+                            "description": "Search for a product relating to the user's needs on Amazon.com and return the link to the product. This is a python function. If no results are found, advise the user that the product they are looking for is not available or to specify further.",
                             "parameters": {
                                 "type": "object",
                                 "properties": {
