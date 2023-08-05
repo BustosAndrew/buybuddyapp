@@ -31,6 +31,10 @@ def get_amazon_product(keywords, category, budget, brand):
         SearchItemsResource.OFFERS_LISTINGS_PRICE,
         SearchItemsResource.IMAGES_PRIMARY_MEDIUM,
     ]
+
+    min = 0
+    if float(budget) >= 350.0:
+        min = int(math.ceil(float(budget) * 100 / 2 * 1.9))
     """ Forming request """
     try:
         if brand:
@@ -43,7 +47,7 @@ def get_amazon_product(keywords, category, budget, brand):
                 brand=brand,
                 resources=search_items_resource,
                 max_price=int(float(budget) * 100),
-                min_price=int(math.ceil(float(budget) * 100 / 2 * 1.9))
+                min_price=min
             )
         else:
             search_items_request = SearchItemsRequest(
@@ -54,7 +58,7 @@ def get_amazon_product(keywords, category, budget, brand):
                 item_count=3,
                 resources=search_items_resource,
                 max_price=int(float(budget) * 100),
-                min_price=int(math.ceil(float(budget) * 100 / 2 * 1.9))
+                min_price=min
             )
     except ValueError as exception:
         print("Error in forming SearchItemsRequest: ", exception)
