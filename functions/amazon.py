@@ -32,7 +32,7 @@ def get_amazon_product(keywords, category, budget, brand):
         SearchItemsResource.IMAGES_PRIMARY_MEDIUM,
     ]
 
-    min = 0
+    min = 100  # 100 = 1.00
     if float(budget) >= 350.0:
         min = int(math.ceil(float(budget) * 100 / 2 * 1.9))
     """ Forming request """
