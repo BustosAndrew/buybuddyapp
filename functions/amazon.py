@@ -6,6 +6,10 @@ from paapi5_python_sdk.models.search_items_resource import SearchItemsResource
 from paapi5_python_sdk.rest import ApiException
 import json
 import math
+import enum
+
+Categories = enum.Enum('Categories', ['Automotive', 'Baby', 'Beauty', 'Books', 'Computers', 'Electronics', 'EverythingElse', 'Fashion', 'GiftCards', 'HealthPersonalCare', 'HomeAndKitchen', 'KindleStore',
+                       'Lighting', 'Luggage', 'MobileApps', 'MoviesAndTV', 'Music', 'OfficeProducts', 'PetSupplies', 'Software', 'SportsAndOutdoors', 'ToolsAndHomeImprovement', 'ToysAndGames', 'VideoGames'])
 
 ACCESS_KEY = config('AMZN_ACCESS_KEY_ID')
 SECRET = config('AMZN_SECRET')
@@ -42,7 +46,7 @@ def get_amazon_product(keywords, category, budget, brand):
                 partner_tag=partner_tag,
                 partner_type=PartnerType.ASSOCIATES,
                 keywords=keywords,
-                search_index=category.capitalize(),
+                search_index=category,
                 item_count=3,
                 brand=brand,
                 resources=search_items_resource,
@@ -54,7 +58,7 @@ def get_amazon_product(keywords, category, budget, brand):
                 partner_tag=partner_tag,
                 partner_type=PartnerType.ASSOCIATES,
                 keywords=keywords,
-                search_index=category.capitalize(),
+                search_index=category,
                 item_count=3,
                 resources=search_items_resource,
                 max_price=int(float(budget) * 100),
@@ -70,7 +74,7 @@ def get_amazon_product(keywords, category, budget, brand):
             search_items_request)
 
         print("API called Successfully")
-        # print("Complete Response:", response)
+        print("Complete Response:", response)
 
         """ Parse response """
         if response.search_result is not None:

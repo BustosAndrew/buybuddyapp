@@ -76,7 +76,7 @@ def make_request():
                         },
                         "category": {
                             "type": "string",
-                            "description": "The amazon category that the keywords fall under. Use any of these search indexes that is related to what they want: Automotive, Baby, Beauty, Books, Computers, Electronics, EverythingElse, Fashion, GiftCards, HealthPersonalCare, HomeAndKitchen, KindleStore, Lighting, Luggage, MobileApps, MoviesAndTV, Music, OfficeProducts, PetSupplies, Software, SportsAndOutdoors, ToolsAndHomeImprovement, ToysAndGames, VideoGames",
+                            "description": "The amazon category that the keywords fall under. Use any of these search indexes that is related to what they want: ['Automotive', 'Baby', 'Beauty', 'Books', 'Computers', 'Electronics', 'EverythingElse', 'Fashion', 'GiftCards', 'HealthPersonalCare', 'HomeAndKitchen', 'KindleStore', 'Lighting', 'Luggage', 'MobileApps', 'MoviesAndTV', 'Music', 'OfficeProducts', 'PetSupplies', 'Software', 'SportsAndOutdoors', 'ToolsAndHomeImprovement', 'ToysAndGames', 'VideoGames']",
                         },
                         "budget": {
                             "type": "integer",
@@ -145,6 +145,7 @@ if st.session_state.chat_history[-1]["role"] != "assistant":
                         else:
                             args = chunk["choices"][0]["delta"]["function_call"]["arguments"]
                             if (args.strip().isalnum()):
+                                # print(args)
                                 function_args[arg] += args
                 brand = (function_args.get("brand")
                          and function_args["brand"]) or ""
@@ -172,7 +173,7 @@ if st.session_state.chat_history[-1]["role"] != "assistant":
                                     },
                                     "category": {
                                         "type": "string",
-                                        "description": "The amazon category that the keywords fall under. Use any of these search indexes that is related to what they want: Automotive, Baby, Beauty, Books, Computers, Electronics, EverythingElse, Fashion, GiftCards, HealthPersonalCare, HomeAndKitchen, KindleStore, Lighting, Luggage, MobileApps, MoviesAndTV, Music, OfficeProducts, PetSupplies, Software, SportsAndOutdoors, ToolsAndHomeImprovement, ToysAndGames, VideoGames",
+                                        "description": "The amazon category that the keywords fall under. Use any of these search indexes that is related to what they want: ['Automotive', 'Baby', 'Beauty', 'Books', 'Computers', 'Electronics', 'EverythingElse', 'Fashion', 'GiftCards', 'HealthPersonalCare', 'HomeAndKitchen', 'KindleStore', 'Lighting', 'Luggage', 'MobileApps', 'MoviesAndTV', 'Music', 'OfficeProducts', 'PetSupplies', 'Software', 'SportsAndOutdoors', 'ToolsAndHomeImprovement', 'ToysAndGames', 'VideoGames']",
                                     },
                                     "budget": {
                                         "type": "integer",
