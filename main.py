@@ -61,7 +61,7 @@ def clear():
 
 def make_request():
     response = openai.ChatCompletion.create(
-        model="gpt-4-0613",
+        model="gpt-3.5-turbo-0613",
         messages=st.session_state.chat_history,
         functions=[
             {
@@ -158,7 +158,7 @@ if st.session_state.chat_history[-1]["role"] != "assistant":
                             "content": function_response or "No results found.",
                 },)
                 second_response = openai.ChatCompletion.create(
-                    model="gpt-4-0613",
+                    model="gpt-3.5-turbo-0613",
                     messages=st.session_state.chat_history,
                     functions=[
                         {
