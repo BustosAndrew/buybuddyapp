@@ -15,7 +15,7 @@ ACCESS_KEY = config('AMZN_ACCESS_KEY_ID')
 SECRET = config('AMZN_SECRET')
 
 
-def get_amazon_product(keywords, category, budget, brand):
+def get_amazon_product(keywords, category, max, min, brand):
     # print("Searching for:", keywords, category, budget, brand)
     partner_tag = "gignius-22"
 
@@ -36,12 +36,9 @@ def get_amazon_product(keywords, category, budget, brand):
         SearchItemsResource.IMAGES_PRIMARY_MEDIUM,
     ]
 
-    min = 100  # 100 = 1.00
-    if float(budget) >= 350.0:
-        min = int(math.ceil(float(budget) * 100 / 2 * 1.9))
     """ Forming request """
     try:
-        if brand:
+        if brand and float(min) > 0.0 and float(max) > 0.0:
             search_items_request = SearchItemsRequest(
                 partner_tag=partner_tag,
                 partner_type=PartnerType.ASSOCIATES,
@@ -50,8 +47,40 @@ def get_amazon_product(keywords, category, budget, brand):
                 item_count=3,
                 brand=brand,
                 resources=search_items_resource,
-                max_price=int(float(budget) * 100),
-                min_price=min
+                max_price=int(float(max) * 100),
+                min_price=int(float(min) * 100),
+            )
+        elif brand and min == "0" and float(max) > 0.0:
+            search_items_request = SearchItemsRequest(
+                partner_tag=partner_tag,
+                partner_type=PartnerType.ASSOCIATES,
+                keywords=keywords,
+                search_index=category,
+                item_count=3,
+                brand=brand,
+                resources=search_items_resource,
+                max_price=int(float(max) * 100),
+            )
+        elif float(min) > 0.0 and float(max) > 0.0:
+            search_items_request = SearchItemsRequest(
+                partner_tag=partner_tag,
+                partner_type=PartnerType.ASSOCIATES,
+                keywords=keywords,
+                search_index=category,
+                item_count=3,
+                resources=search_items_resource,
+                max_price=int(float(max) * 100),
+                min_price=int(float(min) * 100),
+            )
+        elif float(max) > 0.0:
+            search_items_request = SearchItemsRequest(
+                partner_tag=partner_tag,
+                partner_type=PartnerType.ASSOCIATES,
+                keywords=keywords,
+                search_index=category,
+                item_count=3,
+                resources=search_items_resource,
+                max_price=int(float(max) * 100),
             )
         else:
             search_items_request = SearchItemsRequest(
@@ -61,8 +90,6 @@ def get_amazon_product(keywords, category, budget, brand):
                 search_index=category,
                 item_count=3,
                 resources=search_items_resource,
-                max_price=int(float(budget) * 100),
-                min_price=min
             )
     except ValueError as exception:
         print("Error in forming SearchItemsRequest: ", exception)

@@ -44,7 +44,7 @@ st.markdown(
     """, unsafe_allow_html=True)
 
 if 'chat_history' not in st.session_state:
-    st.session_state.chat_history = [{"role": "system", "content": "The year is currently 2023. If users are asking about product versions that you aren't aware of, they are likely right. I want you to act as a highly knowledgeable retail worker who specializes in all products available on Amazon.com. Ask questions individually of their requirements. Start by asking their budget for each different product they're looking for. After finding their requirements, suggest the most suitable product from Amazon.com for them. Please provide a properly formatted Amazon product link along with its associated image. Remember to highlight the product's key features and how it meets the user's specified needs. Be sure to communicate in a friendly, professional tone that reflects excellent customer service.  If you think what they're looking for is too broad, ask them to clarify what they want further. If the product they're looking for is known to also be used/refurbished, ask if they prefer a used item. Only ask one question per message. Show them the affiliate link, price and image of the product as a result."}, {"role": "assistant", "content": "What are you shopping for?"}]
+    st.session_state.chat_history = [{"role": "system", "content": "The year is currently 2023. If users are asking about product versions that you aren't aware of, they are likely right. I want you to act as a highly knowledgeable retail worker who specializes in all products available on Amazon.com. Ask questions individually of their requirements. Start by asking their budget for each different product they're looking for. After finding their requirements, suggest the most suitable product from Amazon.com for them. Please provide a properly formatted Amazon product link and image. Remember to highlight the product's key features and how it meets the user's specified needs. Communicate in a friendly, professional tone that reflects excellent customer service.  If you think what they're looking for is too broad, ask them to clarify what they want further. If the product they're looking for is known to also be used/refurbished, ask if they prefer a used item. Always show the image right under the product name."}, {"role": "assistant", "content": "What are you shopping for on Amazon?"}]
 
 st.header("BuyBuddy")
 
@@ -56,7 +56,7 @@ for message in st.session_state.chat_history:
 
 
 def clear():
-    st.session_state.chat_history = [{"role": "system", "content": "The year is currently 2023. If users are asking about product versions that you aren't aware of, they are likely right. I want you to act as a highly knowledgeable retail worker who specializes in all products available on Amazon.com. Ask questions individually of their requirements. Start by asking their budget for each different product they're looking for. After finding their requirements, suggest the most suitable product from Amazon.com for them. Please provide a properly formatted Amazon product link along with its associated image. Remember to highlight the product's key features and how it meets the user's specified needs. Be sure to communicate in a friendly, professional tone that reflects excellent customer service. If you think what they're looking for is too broad, ask them to clarify what they want further. If the product they're looking for is known to also be used/refurbished, ask if they prefer a used item. Only ask one question per message. Show them the affiliate link, price and image of the product as a result."}, {"role": "assistant", "content": "What are you shopping for?"}]
+    st.session_state.chat_history = [{"role": "system", "content": "The year is currently 2023. If users are asking about product versions that you aren't aware of, they are likely right. I want you to act as a highly knowledgeable retail worker who specializes in all products available on Amazon.com. Ask questions individually of their requirements. Start by asking their budget for each different product they're looking for. After finding their requirements, suggest the most suitable product from Amazon.com for them. Please provide a properly formatted Amazon product link and image. Remember to highlight the product's key features and how it meets the user's specified needs. Communicate in a friendly, professional tone that reflects excellent customer service. If you think what they're looking for is too broad, ask them to clarify what they want further. If the product they're looking for is known to also be used/refurbished, ask if they prefer a used item. Always show the image right under the product name."}, {"role": "assistant", "content": "What are you shopping for on Amazon?"}]
 
 
 def make_request():
@@ -66,7 +66,7 @@ def make_request():
         functions=[
             {
                 "name": "get_amazon_product",
-                "description": "Search for a product relating to the user's needs on Amazon.com and return the link/image/price of the product. This is a python function. If no results are found, advise the user that the product they are looking for is not available or to specify further.",
+                "description": "Search for a product relating to the user's needs on Amazon.com and always include the link, render the product image, and include the price of the product. Show the image right under the product name. Dollar amounts are in AUD. If no results are found, advise the user that the product they are looking for is not available or to specify further.",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -78,16 +78,20 @@ def make_request():
                             "type": "string",
                             "description": "The amazon category that the keywords fall under. Use any of these search indexes that is related to what they want: ['Automotive', 'Baby', 'Beauty', 'Books', 'Computers', 'Electronics', 'EverythingElse', 'Fashion', 'GiftCards', 'HealthPersonalCare', 'HomeAndKitchen', 'KindleStore', 'Lighting', 'Luggage', 'MobileApps', 'MoviesAndTV', 'Music', 'OfficeProducts', 'PetSupplies', 'Software', 'SportsAndOutdoors', 'ToolsAndHomeImprovement', 'ToysAndGames', 'VideoGames']",
                         },
-                        "budget": {
+                        "min": {
                             "type": "integer",
-                            "description": "The maximum amount of money the user is willing to spend on the product.",
+                            "description": "The minimum budget the user is willing to spend on the product. If none is specified, try to pass in a number near the max budget.",
+                        },
+                        "max": {
+                            "type": "integer",
+                            "description": "The maximum budget the user is willing to spend on the product. If users say any or any price, put the generally known max price for the product here. This must be greater than 0.",
                         },
                         "brand": {
                             "type": "string",
                             "description": "The brand of the product that the user wants. If they want a used product, the value will be Amazon Renewed.",
                         },
                     },
-                    "required": ["keywords", "category", "budget"],
+                    "required": ["keywords", "category", "max", "min"],
                 },
             }
         ],
@@ -139,9 +143,12 @@ if st.session_state.chat_history[-1]["role"] != "assistant":
                         elif chunk["choices"][0]["delta"]["function_call"]["arguments"] == "brand":
                             function_args["brand"] = ""
                             arg = "brand"
-                        elif chunk["choices"][0]["delta"]["function_call"]["arguments"] == "budget":
-                            function_args["budget"] = ""
-                            arg = "budget"
+                        elif chunk["choices"][0]["delta"]["function_call"]["arguments"] == "min":
+                            function_args["min"] = ""
+                            arg = "min"
+                        elif chunk["choices"][0]["delta"]["function_call"]["arguments"] == "max":
+                            function_args["max"] = ""
+                            arg = "max"
                         else:
                             args = chunk["choices"][0]["delta"]["function_call"]["arguments"]
                             if (args.strip().isalnum()):
@@ -149,8 +156,10 @@ if st.session_state.chat_history[-1]["role"] != "assistant":
                                 function_args[arg] += args
                 brand = (function_args.get("brand")
                          and function_args["brand"]) or ""
+                min = (function_args.get("min")
+                       and function_args["min"]) or "0"
                 function_response = get_amazon_product(
-                    function_args["keywords"], function_args["category"], function_args["budget"], brand)
+                    function_args["keywords"], function_args["category"], function_args["max"], min, brand)
                 # print(function_response)
                 st.session_state.chat_history.append({
                     "role": "function",
@@ -163,7 +172,7 @@ if st.session_state.chat_history[-1]["role"] != "assistant":
                     functions=[
                         {
                             "name": "get_amazon_product",
-                            "description": "Search for a product relating to the user's needs on Amazon.com and return the link to the product. This is a python function. If no results are found, advise the user that the product they are looking for is not available or to specify further.",
+                            "description": "Search for a product relating to the user's needs on Amazon.com and always include the link, render the product image, and include the price of the product. Show the image right under the product name. Dollar amounts are in AUD. If no results are found, advise the user that the product they are looking for is not available or to specify further.",
                             "parameters": {
                                 "type": "object",
                                 "properties": {
@@ -175,16 +184,20 @@ if st.session_state.chat_history[-1]["role"] != "assistant":
                                         "type": "string",
                                         "description": "The amazon category that the keywords fall under. Use any of these search indexes that is related to what they want: ['Automotive', 'Baby', 'Beauty', 'Books', 'Computers', 'Electronics', 'EverythingElse', 'Fashion', 'GiftCards', 'HealthPersonalCare', 'HomeAndKitchen', 'KindleStore', 'Lighting', 'Luggage', 'MobileApps', 'MoviesAndTV', 'Music', 'OfficeProducts', 'PetSupplies', 'Software', 'SportsAndOutdoors', 'ToolsAndHomeImprovement', 'ToysAndGames', 'VideoGames']",
                                     },
-                                    "budget": {
+                                    "min": {
                                         "type": "integer",
-                                        "description": "The maximum amount of money the user is willing to spend on the product.",
+                                        "description": "The minimum budget the user is willing to spend on the product. If none is specified, try to pass in a number near the max budget.",
+                                    },
+                                    "max": {
+                                        "type": "integer",
+                                        "description": "The maximum budget the user is willing to spend on the product. If users say any or any price, put the generally known max price for the product here. This must be greater than 0.",
                                     },
                                     "brand": {
                                         "type": "string",
                                         "description": "The brand of the product that the user wants. If they want a used product, the value will be Amazon Renewed.",
                                     },
                                 },
-                                "required": ["keywords", "category", "budget"],
+                                "required": ["keywords", "category", "max", "min"],
                             },
                         }
                     ],
@@ -217,12 +230,6 @@ if st.session_state.chat_history[-1]["role"] != "assistant":
             "/", "-")).update({"chat_history": st.session_state.chat_history})
 
 with st.sidebar:
-    # st.title("Usage Stats:")
-    # st.markdown("""---""")
-    # st.write("Prompt tokens used :", prompt_tokens)
-    # st.write("Completion tokens used :", completion_tokes)
-    # st.write("Total tokens used :", total_tokens_used)
-    # st.write("Total cost of request: ${:.8f}".format(cost_of_response))
     login_info = oauth.login(
         client_id=client_id,
         client_secret=client_secret,
