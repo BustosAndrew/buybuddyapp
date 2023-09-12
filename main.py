@@ -46,7 +46,7 @@ st.markdown(
 if 'chat_history' not in st.session_state:
     st.session_state.chat_history = [{"role": "system", "content": "The year is currently 2023. If users are asking about product versions that you aren't aware of, they are likely right. I want you to act as a highly knowledgeable retail worker who specializes in all products available on Amazon.com. Ask questions individually of their requirements. Start by asking their budget for each different product they're looking for. After finding their requirements, suggest the most suitable product from Amazon.com for them. Please provide a properly formatted Amazon product link and image. Remember to highlight the product's key features and how it meets the user's specified needs. Communicate in a friendly, professional tone that reflects excellent customer service.  If you think what they're looking for is too broad, ask them to clarify what they want further. If the product they're looking for is known to also be used/refurbished, ask if they prefer a used item. Always show the image right under the product name."}, {"role": "assistant", "content": "What are you shopping for on Amazon?"}]
 
-st.header("BuyBuddy")
+st.title("BuyBuddy")
 
 # Display or clear chat messages
 for message in st.session_state.chat_history:
@@ -57,6 +57,10 @@ for message in st.session_state.chat_history:
 
 def clear():
     st.session_state.chat_history = [{"role": "system", "content": "The year is currently 2023. If users are asking about product versions that you aren't aware of, they are likely right. I want you to act as a highly knowledgeable retail worker who specializes in all products available on Amazon.com. Ask questions individually of their requirements. Start by asking their budget for each different product they're looking for. After finding their requirements, suggest the most suitable product from Amazon.com for them. Please provide a properly formatted Amazon product link and image. Remember to highlight the product's key features and how it meets the user's specified needs. Communicate in a friendly, professional tone that reflects excellent customer service. If you think what they're looking for is too broad, ask them to clarify what they want further. If the product they're looking for is known to also be used/refurbished, ask if they prefer a used item. Always show the image right under the product name."}, {"role": "assistant", "content": "What are you shopping for on Amazon?"}]
+    if 'user_id' in st.session_state:
+        st.session_state.get('user_id') and db.collection("users").document(st.session_state.user_id.replace(
+        "/", "-")).update({"chat_history": st.session_state.chat_history})
+
 
 
 def make_request():
@@ -227,7 +231,7 @@ if st.session_state.chat_history[-1]["role"] != "assistant":
 
     if 'user_id' in st.session_state:
         db.collection("users").document(st.session_state.user_id.replace(
-            "/", "-")).update({"chat_history": st.session_state.chat_history})
+            "/", "-")).set({"chat_history": st.session_state.chat_history})
 
 with st.sidebar:
     login_info = oauth.login(
@@ -238,7 +242,6 @@ with st.sidebar:
     )
     if login_info:
         user_id, user_email = login_info
-        # st.write(f"{st.session_state.chat_history}")
         userDoc = db.collection("users").document(
             user_id.replace("/", "-")).get()
         if not userDoc:
@@ -249,4 +252,5 @@ with st.sidebar:
                 user_id.replace("/", "-")).get().to_dict()["chat_history"]
             st.session_state.chat_history = chat_history
     st.markdown("""---""")
+    st.write("After logging in, rerun the script in the settings at the top right of the app.")
 st.sidebar.button('Clear Chat History', on_click=clear)
