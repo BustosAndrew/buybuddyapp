@@ -1,17 +1,17 @@
-# Streamlit + ChatGPT
+# BuyBuddy
 
-![alt text](https://github.com/joeychrys/streamlit-chatGPT/blob/master/docs/application_image.jpg?raw=true)
+![Screenshot of the BuyBuddy app](https://github.com/BustosAndrew/buybuddyapp/blob/main/buybuddy.png)
 
 ## Overview
 
-This is a sample Streamlit application that demonstrates how to use Streamlit as a UI with OpenAI's Chat API.
+This is a python web app using Streamlit, Google OAuth, and ChatGPT API to facilitate realistic product recommendations from Amazon.
 
 ## Installation
 
 1. Clone the repository
 
 ```bash
-git clone https://github.com/joeychrys/streamlit-chatGPT.git
+git clone https://github.com/BustosAndrew/buybuddyapp.git
 ```
 
 2. Create a `.env` file based on the `.env.example` file inside the `src` directory and add your `OPENAI_API_KEY`
@@ -30,7 +30,7 @@ source env/bin/activate
 4. Move to project directory
 
 ```bash
-cd streamlit-chatGPT
+cd buybuddyapp
 ```
 
 5. Install the required packages
@@ -47,7 +47,13 @@ streamlit run src/main.py
 
 ## Usage
 
-Once the application is running, you can interact with it by following the on-screen instructions at `http://localhost:8501`
+Once the application is running, you can interact with it by following the on-screen instructions at `http://localhost:8080`
+
+## My Code
+
+https://github.com/BustosAndrew/buybuddyapp/blob/a9c94da4cd32b0ab11b6b48a8220f188311ae5ab/functions/amazon.py#L1-L134
+
+https://github.com/BustosAndrew/buybuddyapp/blob/a9c94da4cd32b0ab11b6b48a8220f188311ae5ab/main.py#L1-L257
 
 ## Contributing
 
