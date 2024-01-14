@@ -5,25 +5,19 @@ from paapi5_python_sdk.models.search_items_request import SearchItemsRequest
 from paapi5_python_sdk.models.search_items_resource import SearchItemsResource
 from paapi5_python_sdk.rest import ApiException
 import json
-import math
 import enum
 
 Categories = enum.Enum('Categories', ['Automotive', 'Baby', 'Beauty', 'Books', 'Computers', 'Electronics', 'EverythingElse', 'Fashion', 'GiftCards', 'HealthPersonalCare', 'HomeAndKitchen', 'KindleStore',
                        'Lighting', 'Luggage', 'MobileApps', 'MoviesAndTV', 'Music', 'OfficeProducts', 'PetSupplies', 'Software', 'SportsAndOutdoors', 'ToolsAndHomeImprovement', 'ToysAndGames', 'VideoGames'])
 
-ACCESS_KEY = config('AMZN_ACCESS_KEY_ID')
-SECRET = config('AMZN_SECRET')
 
-
-def get_amazon_product(keywords, category, max, min, brand):
+def get_amazon_product(keywords, category, max, min, brand, ACCESS_KEY, SECRET):
     # print("Searching for:", keywords, category, budget, brand)
     partner_tag = "gignius-22"
 
     host = "webservices.amazon.com.au"
     url = "amazon.com.au/dp"
     region = "us-west-2"
-    ACCESS_KEY = config('AMZN_ACCESS_KEY_ID')
-    SECRET = config('AMZN_SECRET')
 
     """ API declaration """
     default_api = DefaultApi(
@@ -118,28 +112,6 @@ def get_amazon_product(keywords, category, max, min, brand):
                                 'price': item.offers.listings[0].price.display_amount, 'availability': available,
                                 'item_info': item.item_info.title.display_value})
             return json.dumps(res)
-            print("Printing first item information in SearchResult:")
-            item_0 = response.search_result.items[0]
-            if item_0 is not None:
-                if item_0.asin is not None:
-                    print("ASIN: ", item_0.asin)
-                if item_0.detail_page_url is not None:
-                    print("DetailPageURL: ", item_0.detail_page_url)
-                if (
-                    item_0.item_info is not None
-                    and item_0.item_info.title is not None
-                    and item_0.item_info.title.display_value is not None
-                ):
-                    print("Title: ", item_0.item_info.title.display_value)
-                if (
-                    item_0.offers is not None
-                    and item_0.offers.listings is not None
-                    and item_0.offers.listings[0].price is not None
-                    and item_0.offers.listings[0].price.display_amount is not None
-                ):
-                    print(
-                        "Buying Price: ", item_0.offers.listings[0].price.display_amount
-                    )
         if response.errors is not None:
             print("\nPrinting Errors:\nPrinting First Error Object from list of Errors")
             print("Error code", response.errors[0].code)

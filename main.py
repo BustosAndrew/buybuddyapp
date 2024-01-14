@@ -1,5 +1,4 @@
 import streamlit as st
-from decouple import config
 import openai
 from functions.amazon import get_amazon_product
 import firebase_admin
@@ -7,10 +6,12 @@ from firebase_admin import firestore, credentials
 import streamlit_google_oauth as oauth
 
 cred = credentials.Certificate("./creds.json")
-client_id = config("GOOGLE_CLIENT_ID")
-client_secret = config("GOOGLE_CLIENT_SECRET")
-redirect_uri = config("GOOGLE_REDIRECT_URI")
-API_KEY = config('OPENAI_API_KEY')
+client_id = st.secrets["GOOGLE_CLIENT_ID"]
+client_secret = st.secrets["GOOGLE_CLIENT_SECRET"]
+redirect_uri = st.secrets["GOOGLE_REDIRECT_URI"]
+API_KEY = st.secrets["OPENAI_API_KEY"]
+ACCESS_KEY = st.secrets["AMZN_ACCESS_KEY_ID"]
+SECRET = st.secrets["AMZN_SECRET"]
 openai.api_key = API_KEY
 
 response = False
@@ -44,7 +45,7 @@ st.markdown(
     """, unsafe_allow_html=True)
 
 if 'chat_history' not in st.session_state:
-    st.session_state.chat_history = [{"role": "system", "content": "The year is currently 2023. If users are asking about product versions that you aren't aware of, they are likely right. I want you to act as a highly knowledgeable retail worker who specializes in all products available on Amazon.com. Ask questions individually of their requirements. Start by asking their budget for each different product they're looking for. After finding their requirements, suggest the most suitable product from Amazon.com for them. Please provide a properly formatted Amazon product link and image. Remember to highlight the product's key features and how it meets the user's specified needs. Communicate in a friendly, professional tone that reflects excellent customer service.  If you think what they're looking for is too broad, ask them to clarify what they want further. If the product they're looking for is known to also be used/refurbished, ask if they prefer a used item. Always show the image right under the product name."}, {"role": "assistant", "content": "What are you shopping for on Amazon?"}]
+    st.session_state.chat_history = [{"role": "system", "content": "The year is currently 2024. If users are asking about product versions that you aren't aware of, they are likely right. I want you to act as a highly knowledgeable retail worker who specializes in all products available on Amazon.com. Ask questions individually of their requirements. Start by asking their budget for each different product they're looking for. After finding their requirements, suggest the most suitable product from Amazon.com for them. Please provide a properly formatted Amazon product link and image. Remember to highlight the product's key features and how it meets the user's specified needs. Communicate in a friendly, professional tone that reflects excellent customer service.  If you think what they're looking for is too broad, ask them to clarify what they want further. If the product they're looking for is known to also be used/refurbished, ask if they prefer a used item. Always show the image right under the product name."}, {"role": "assistant", "content": "What are you shopping for on Amazon?"}]
 
 st.title("BuyBuddy")
 
@@ -56,11 +57,10 @@ for message in st.session_state.chat_history:
 
 
 def clear():
-    st.session_state.chat_history = [{"role": "system", "content": "The year is currently 2023. If users are asking about product versions that you aren't aware of, they are likely right. I want you to act as a highly knowledgeable retail worker who specializes in all products available on Amazon.com. Ask questions individually of their requirements. Start by asking their budget for each different product they're looking for. After finding their requirements, suggest the most suitable product from Amazon.com for them. Please provide a properly formatted Amazon product link and image. Remember to highlight the product's key features and how it meets the user's specified needs. Communicate in a friendly, professional tone that reflects excellent customer service. If you think what they're looking for is too broad, ask them to clarify what they want further. If the product they're looking for is known to also be used/refurbished, ask if they prefer a used item. Always show the image right under the product name."}, {"role": "assistant", "content": "What are you shopping for on Amazon?"}]
+    st.session_state.chat_history = [{"role": "system", "content": "The year is currently 2024. If users are asking about product versions that you aren't aware of, they are likely right. I want you to act as a highly knowledgeable retail worker who specializes in all products available on Amazon.com. Ask questions individually of their requirements. Start by asking their budget for each different product they're looking for. After finding their requirements, suggest the most suitable product from Amazon.com for them. Please provide a properly formatted Amazon product link and image. Remember to highlight the product's key features and how it meets the user's specified needs. Communicate in a friendly, professional tone that reflects excellent customer service. If you think what they're looking for is too broad, ask them to clarify what they want further. If the product they're looking for is known to also be used/refurbished, ask if they prefer a used item. Always show the image right under the product name."}, {"role": "assistant", "content": "What are you shopping for on Amazon?"}]
     if 'user_id' in st.session_state:
         st.session_state.get('user_id') and db.collection("users").document(st.session_state.user_id.replace(
-        "/", "-")).update({"chat_history": st.session_state.chat_history})
-
+            "/", "-")).update({"chat_history": st.session_state.chat_history})
 
 
 def make_request():
@@ -163,7 +163,7 @@ if st.session_state.chat_history[-1]["role"] != "assistant":
                 min = (function_args.get("min")
                        and function_args["min"]) or "0"
                 function_response = get_amazon_product(
-                    function_args["keywords"], function_args["category"], function_args["max"], min, brand)
+                    function_args["keywords"], function_args["category"], function_args["max"], min, brand, ACCESS_KEY, SECRET)
                 # print(function_response)
                 st.session_state.chat_history.append({
                     "role": "function",
@@ -252,5 +252,6 @@ with st.sidebar:
                 user_id.replace("/", "-")).get().to_dict()["chat_history"]
             st.session_state.chat_history = chat_history
     st.markdown("""---""")
-    st.write("After logging in, rerun the script in the settings at the top right of the app.")
+    st.write(
+        "After logging in, rerun the script in the settings at the top right of the app.")
 st.sidebar.button('Clear Chat History', on_click=clear)
